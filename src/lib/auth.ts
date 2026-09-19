@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
-import { cookies } from "next/headers";
+import { cookies, headers } from "next/headers";
 import db from "./db";
 
 export interface User {
@@ -96,9 +96,15 @@ export async function getCurrentUser(): Promise<User | null> {
 export async function setSessionCookie(sessionId: string, remember: boolean) {
   const cookieStore = await cookies();
   const days = remember ? REMEMBER_SESSION_DAYS : SHORT_SESSION_DAYS;
+  const h = await headers();
+  // A cookie marked Secure is silently dropped by browsers when the request
+  // arrived over plain HTTP (e.g. a bare Tailscale hostname/IP with no TLS),
+  // so base this on the actual request protocol rather than NODE_ENV.
+  const forwardedProto = h.get("x-forwarded-proto");
+  const isHttps = forwardedProto ? forwardedProto === "https" : false;
   cookieStore.set(SESSION_COOKIE, sessionId, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === "production",
+    secure: isHttps,
     sameSite: "lax",
     path: "/",
     maxAge: days * 24 * 60 * 60,

@@ -72,7 +72,7 @@ export default function ItemRow({
   }
 
   return (
-    <div className="rounded-lg border border-black/10 dark:border-white/10 p-3 flex items-center justify-between gap-2 group">
+    <div className="rounded-lg border border-black/10 dark:border-white/10 p-3 flex items-center justify-between gap-2">
       <div className="min-w-0">
         <p className="font-medium truncate">
           {item.name}
@@ -84,7 +84,7 @@ export default function ItemRow({
           <p className="text-sm text-black/50 dark:text-white/50 truncate">{item.description}</p>
         )}
       </div>
-      <div className="flex gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+      <div className="flex items-center gap-1 shrink-0">
         <button
           onClick={() => setEditing(true)}
           className="text-sm px-2 py-1 rounded-md hover:bg-black/5 dark:hover:bg-white/10"
@@ -93,9 +93,13 @@ export default function ItemRow({
         </button>
         <button
           onClick={onDelete}
-          className="text-sm px-2 py-1 rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
+          aria-label="Remove item"
+          title="Remove item"
+          className="flex items-center justify-center w-7 h-7 rounded-full text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30"
         >
-          Remove
+          <svg viewBox="0 0 20 20" fill="none" className="w-4 h-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+            <path d="M5 5l10 10M15 5L5 15" />
+          </svg>
         </button>
       </div>
     </div>

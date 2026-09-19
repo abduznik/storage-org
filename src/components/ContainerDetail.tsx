@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -14,6 +14,8 @@ import AddItemForm from "./AddItemForm";
 import ChildContainers from "./ChildContainers";
 import SharePanel from "./SharePanel";
 import MoveContainerControl from "./MoveContainerControl";
+
+const POLL_INTERVAL_MS = 5000;
 
 export default function ContainerDetail({
   container,
@@ -32,12 +34,40 @@ export default function ContainerDetail({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(initialItems);
+  const [children, setChildren] = useState(initialChildren);
   const [name, setName] = useState(container.name);
   const [editingName, setEditingName] = useState(false);
   const [photoPath, setPhotoPath] = useState(container.photo_path);
   const [uploading, setUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
+
+  // Poll for changes made by other users/devices viewing the same
+  // container, so everyone stays in sync without a manual refresh.
+  const editingNameRef = useRef(editingName);
+  editingNameRef.current = editingName;
+  const uploadingRef = useRef(uploading);
+  uploadingRef.current = uploading;
+
+  const pollForUpdates = useCallback(async () => {
+    if (document.hidden) return;
+    try {
+      const res = await fetch(`/api/containers/${container.id}`, { cache: "no-store" });
+      if (!res.ok) return;
+      const data = await res.json();
+      setItems(data.items);
+      setChildren(data.children);
+      if (!editingNameRef.current) setName(data.container.name);
+      if (!uploadingRef.current) setPhotoPath(data.container.photo_path);
+    } catch {
+      // Transient network errors are ignored; the next tick will retry.
+    }
+  }, [container.id]);
+
+  useEffect(() => {
+    const interval = setInterval(pollForUpdates, POLL_INTERVAL_MS);
+    return () => clearInterval(interval);
+  }, [pollForUpdates]);
 
   async function handleSaveName() {
     setEditingName(false);
@@ -261,7 +291,7 @@ export default function ContainerDetail({
 
       <ChildContainers
         parentId={container.id}
-        children={initialChildren}
+        children={children}
       />
 
       <div>

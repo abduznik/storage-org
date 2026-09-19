@@ -43,3 +43,7 @@ next-env.d.ts
 # app data (sqlite db + uploaded photos)
 /data
 *.log
+
+# regenerated locally by Next.js tooling; not tracked in this repo
+/AGENTS.md
+/CLAUDE.md

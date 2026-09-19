@@ -9,7 +9,7 @@ export default async function Header() {
     <header className="border-b border-black/10 dark:border-white/10">
       <div className="mx-auto max-w-5xl flex items-center justify-between px-4 py-3">
         <Link href="/" className="font-semibold text-lg tracking-tight">
-          📦 Storage Organizer
+          Storage Organizer
         </Link>
         {user && (
           <div className="flex items-center gap-3 text-sm">

@@ -34,6 +34,18 @@ default (override with the `DATA_DIR` env var).
 
 ## Running as a container
 
+### Option A: use the prebuilt image
+
+A GitHub Actions workflow builds and publishes this image on every push to
+`master`. Pull it directly instead of building from source:
+
+```bash
+docker pull ghcr.io/abduznik/storage-org:latest
+docker run -d --name storage-org -p 3000:3000 -v storage-org-data:/data ghcr.io/abduznik/storage-org:latest
+```
+
+### Option B: build it yourself
+
 ```bash
 docker compose up -d --build
 ```

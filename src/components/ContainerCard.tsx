@@ -16,7 +16,9 @@ export default function ContainerCard({ container }: { container: ContainerWithM
             className="h-full w-full object-cover"
           />
         ) : (
-          <span className="text-2xl">📦</span>
+          <span className="text-xs font-medium text-black/40 dark:text-white/40 uppercase">
+            {container.name.slice(0, 2)}
+          </span>
         )}
       </div>
       <div className="flex-1 min-w-0">

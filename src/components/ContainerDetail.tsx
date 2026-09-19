@@ -165,7 +165,9 @@ export default function ContainerDetail({
               className="h-full w-full object-cover"
             />
           ) : (
-            <span className="text-4xl">📦</span>
+            <span className="text-lg font-medium text-black/40 dark:text-white/40 uppercase">
+              {container.name.slice(0, 2)}
+            </span>
           )}
           {uploading && (
             <div className="absolute inset-0 bg-black/40 flex items-center justify-center text-white text-xs">
@@ -222,14 +224,14 @@ export default function ContainerDetail({
               rel="noopener noreferrer"
               className="text-sm rounded-md border border-black/15 dark:border-white/15 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"
             >
-              🏷️ Print label
+              Print label
             </a>
             <a
               href={`/api/containers/${container.id}/qr`}
               download={`container-${container.id}-qr.png`}
               className="text-sm rounded-md border border-black/15 dark:border-white/15 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"
             >
-              ⬇ QR only
+              QR only
             </a>
             {isOwner && (
               <button

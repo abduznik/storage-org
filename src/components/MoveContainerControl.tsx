@@ -46,7 +46,7 @@ export default function MoveContainerControl({
           onClick={() => setOpen(true)}
           className="text-sm text-black/60 dark:text-white/60 hover:underline"
         >
-          📍 Move this container...
+          Move this container...
         </button>
       ) : (
         <div className="flex flex-col gap-2">

@@ -3,8 +3,41 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Storage Organizer — Live Demo</title>
-<meta name="description" content="Try a client-side demo of Storage Organizer: nested containers, items, search, and printable QR labels." />
+<title>Storage Organizer — Self-Hosted Storage Inventory with QR Labels</title>
+<meta name="description" content="Storage Organizer is a self-hosted app for tracking what's inside every box, bin, and closet. Nest containers, search by name or ID, and print QR labels that open each container's page on your phone. Try the live browser demo, no install required." />
+<meta name="keywords" content="storage organizer, home inventory app, QR code labels, self-hosted inventory, garage organization, storage container tracker, nested storage, printable QR labels, Niimbot labels, Next.js SQLite app" />
+<meta name="robots" content="index, follow" />
+<meta name="author" content="abduznik" />
+<link rel="canonical" href="https://abduznik.github.io/storage-org/" />
+
+<meta property="og:type" content="website" />
+<meta property="og:title" content="Storage Organizer — Self-Hosted Storage Inventory with QR Labels" />
+<meta property="og:description" content="Track what's inside every box, bin, and closet. Nest containers, search by name or ID, and print QR labels that open each container's page on your phone." />
+<meta property="og:url" content="https://abduznik.github.io/storage-org/" />
+<meta property="og:site_name" content="Storage Organizer" />
+
+<meta name="twitter:card" content="summary" />
+<meta name="twitter:title" content="Storage Organizer — Self-Hosted Storage Inventory with QR Labels" />
+<meta name="twitter:description" content="Track what's inside every box, bin, and closet. Nest containers, search by name or ID, and print QR labels that open each container's page on your phone." />
+
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Storage Organizer",
+  "url": "https://abduznik.github.io/storage-org/",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any (self-hosted, Docker)",
+  "description": "Self-hosted storage inventory app for tracking contents of nested boxes, bins, and closets, with printable QR labels and multi-user sharing.",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "sameAs": ["https://github.com/abduznik/storage-org"]
+}
+</script>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
   :root {
@@ -111,6 +144,7 @@
     font-size: 1.5rem; overflow: hidden;
   }
   .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .thumb-fallback { font-size: 0.75rem; font-weight: 600; color: var(--muted); text-transform: uppercase; }
   .grid { display: grid; gap: 8px; grid-template-columns: 1fr; }
   @media (min-width: 560px) { .grid { grid-template-columns: 1fr 1fr; } }
   .muted { color: var(--muted); }
@@ -154,19 +188,36 @@
   .modal .label-id { font-family: monospace; font-weight: 700; font-size: 1.4rem; letter-spacing: 4px; }
   .hidden { display: none !important; }
   footer.note { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 24px 16px; }
+  .intro { max-width: 720px; margin: 24px auto 0; padding: 0 16px; }
+  .intro h1 { font-size: 1.6rem; margin: 0 0 8px; }
+  .intro p { color: var(--muted); font-size: 0.95rem; line-height: 1.5; margin: 0; }
 </style>
 </head>
 <body>
 <div class="banner">
-  🧪 This is a client-side demo — data is stored only in your browser (localStorage), nothing is sent anywhere.
-  <a href="https://github.com/abduznik/storage-org" target="_blank" rel="noopener">View the real self-hosted app on GitHub →</a>
+  This is a client-side demo — data is stored only in your browser (localStorage), nothing is sent anywhere.
+  <a href="https://github.com/abduznik/storage-org" target="_blank" rel="noopener">View the real self-hosted app on GitHub</a>
 </div>
 <header>
-  <div class="brand">📦 Storage Organizer <span class="badge">demo</span></div>
+  <div class="brand">Storage Organizer <span class="badge">demo</span></div>
   <button id="reset-btn">Reset demo data</button>
 </header>
 
-<main id="app"></main>
+<section class="intro">
+  <h1>Storage Organizer</h1>
+  <p>
+    A self-hosted app for tracking what's inside every box, bin, and closet. Nest containers
+    inside each other, search by name or exact ID, and print QR labels that open each
+    container's page on your phone. This page is an interactive, browser-only demo — no
+    account, no server, nothing leaves your device.
+  </p>
+</section>
+
+<main id="app">
+  <noscript>
+    <p>This demo requires JavaScript. The self-hosted app works the same way with a real server and database — see the GitHub repository for setup instructions.</p>
+  </noscript>
+</main>
 
 <footer class="note">
   Demo build — no accounts, no server. Clone the repo and run it with Docker for the real multi-user app with QR labels that actually deep-link to your containers.
@@ -284,7 +335,7 @@
   function containerCardHtml(c) {
     const photo = c.photo
       ? `<img src="${c.photo}" alt="">`
-      : `📦`;
+      : `<span class="thumb-fallback">${escapeHtml(c.name.slice(0, 2).toUpperCase())}</span>`;
     return `
       <a class="card" href="#" data-nav="${c.id}">
         <div class="thumb">${photo}</div>
@@ -455,14 +506,14 @@
 
       <div class="detail-header">
         <div class="photo-box" id="photo-box">
-          ${container.photo ? `<img src="${container.photo}" alt="">` : "📦"}
+          ${container.photo ? `<img src="${container.photo}" alt="">` : `<span class="thumb-fallback">${escapeHtml(container.name.slice(0, 2).toUpperCase())}</span>`}
         </div>
         <div style="flex:1; min-width:0;">
           <h1 class="title" id="container-title" contenteditable="true" spellcheck="false">${escapeHtml(container.name)}</h1>
           <p class="muted" style="margin:4px 0;">ID ${container.id}</p>
           <div class="row" style="flex-wrap:wrap; margin-top:8px;">
-            <button id="label-btn">🏷️ Print label</button>
-            ${container.parentId ? `<button data-nav="${container.parentId}" id="move-up-btn">⬆ Go to parent</button>` : ""}
+            <button id="label-btn">Print label</button>
+            ${container.parentId ? `<button data-nav="${container.parentId}" id="move-up-btn">Go to parent</button>` : ""}
             <button class="danger" id="delete-container-btn">Delete</button>
           </div>
         </div>

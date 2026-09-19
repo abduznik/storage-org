@@ -84,7 +84,7 @@ export default function ChildContainers({
             onClick={() => setMode(mode === "import" ? null : "import")}
             className="text-sm text-black/60 dark:text-white/60 hover:underline"
           >
-            {mode === "import" ? "Cancel" : "↳ Import existing container"}
+            {mode === "import" ? "Cancel" : "Import existing container"}
           </button>
         </div>
       </div>

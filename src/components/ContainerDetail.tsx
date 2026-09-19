@@ -14,6 +14,7 @@ import AddItemForm from "./AddItemForm";
 import ChildContainers from "./ChildContainers";
 import SharePanel from "./SharePanel";
 import MoveContainerControl from "./MoveContainerControl";
+import PhotoViewer from "./PhotoViewer";
 
 const POLL_INTERVAL_MS = 5000;
 
@@ -39,6 +40,7 @@ export default function ContainerDetail({
   const [editingName, setEditingName] = useState(false);
   const [photoPath, setPhotoPath] = useState(container.photo_path);
   const [uploading, setUploading] = useState(false);
+  const [viewingPhoto, setViewingPhoto] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -184,15 +186,15 @@ export default function ContainerDetail({
 
       <div className="flex gap-4 items-start">
         <div
-          className="h-28 w-28 shrink-0 rounded-lg bg-black/5 dark:bg-white/10 overflow-hidden flex items-center justify-center cursor-pointer relative"
-          onClick={() => fileInputRef.current?.click()}
+          className="h-28 w-28 shrink-0 rounded-lg bg-black/5 dark:bg-white/10 overflow-hidden flex items-center justify-center relative"
         >
           {photoPath ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={`/api/uploads/${photoPath}`}
               alt={container.name}
-              className="h-full w-full object-cover"
+              className="h-full w-full object-cover cursor-pointer"
+              onClick={() => setViewingPhoto(true)}
             />
           ) : (
             <span className="text-lg font-medium text-black/40 dark:text-white/40 uppercase">
@@ -204,9 +206,16 @@ export default function ContainerDetail({
               Uploading...
             </div>
           )}
-          <div className="absolute bottom-0 inset-x-0 bg-black/50 text-white text-[10px] text-center py-0.5">
-            change photo
-          </div>
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            aria-label="Change photo"
+            title="Change photo"
+            className="absolute bottom-1 right-1 w-6 h-6 rounded-full bg-black/60 hover:bg-black/80 text-white flex items-center justify-center"
+          >
+            <svg viewBox="0 0 20 20" fill="none" className="w-3 h-3" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M13.5 3.5a1.5 1.5 0 0 1 2 2l-8 8-3 1 1-3 8-8Z" />
+            </svg>
+          </button>
           <input
             ref={fileInputRef}
             type="file"
@@ -303,8 +312,14 @@ export default function ContainerDetail({
             <ItemRow
               key={item.id}
               item={item}
+              containerId={container.id}
               onUpdate={(fields) => handleUpdateItem(item.id, fields)}
               onDelete={() => handleDeleteItem(item.id)}
+              onPhotoChange={(photoPath) =>
+                setItems((prev) =>
+                  prev.map((it) => (it.id === item.id ? { ...it, photo_path: photoPath } : it))
+                )
+              }
             />
           ))}
           {items.length === 0 && (
@@ -317,6 +332,14 @@ export default function ContainerDetail({
       </div>
 
       {isOwner && <SharePanel containerId={container.id} initialShares={initialShares} />}
+
+      {viewingPhoto && photoPath && (
+        <PhotoViewer
+          src={`/api/uploads/${photoPath}`}
+          alt={container.name}
+          onClose={() => setViewingPhoto(false)}
+        />
+      )}
     </div>
   );
 }

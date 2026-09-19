@@ -63,6 +63,7 @@ CREATE TABLE IF NOT EXISTS items (
   name TEXT NOT NULL,
   description TEXT,
   quantity INTEGER,
+  photo_path TEXT,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
@@ -74,6 +75,12 @@ CREATE INDEX IF NOT EXISTS idx_containers_parent ON containers(parent_container_
 CREATE INDEX IF NOT EXISTS idx_shares_user ON container_shares(user_id);
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 `);
+
+// Migration: add photo_path to items for databases created before this column existed.
+const itemColumns = db.prepare("PRAGMA table_info(items)").all() as { name: string }[];
+if (!itemColumns.some((c) => c.name === "photo_path")) {
+  db.exec("ALTER TABLE items ADD COLUMN photo_path TEXT");
+}
 
 export default db;
 export { uploadsDir, dataDir };

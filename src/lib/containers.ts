@@ -16,6 +16,7 @@ export interface Item {
   name: string;
   description: string | null;
   quantity: number | null;
+  photo_path: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -319,7 +320,12 @@ export function createItem(
 
 export function updateItem(
   itemId: number,
-  fields: { name?: string; description?: string | null; quantity?: number | null }
+  fields: {
+    name?: string;
+    description?: string | null;
+    quantity?: number | null;
+    photo_path?: string | null;
+  }
 ) {
   const current = db
     .prepare("SELECT * FROM items WHERE id = ?")
@@ -330,9 +336,11 @@ export function updateItem(
     fields.description !== undefined ? fields.description : current.description;
   const quantity =
     fields.quantity !== undefined ? fields.quantity : current.quantity;
+  const photoPath =
+    fields.photo_path !== undefined ? fields.photo_path : current.photo_path;
   db.prepare(
-    "UPDATE items SET name = ?, description = ?, quantity = ?, updated_at = datetime('now') WHERE id = ?"
-  ).run(name, description, quantity, itemId);
+    "UPDATE items SET name = ?, description = ?, quantity = ?, photo_path = ?, updated_at = datetime('now') WHERE id = ?"
+  ).run(name, description, quantity, photoPath, itemId);
 }
 
 export function deleteItem(itemId: number) {

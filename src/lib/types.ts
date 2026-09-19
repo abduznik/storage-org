@@ -20,6 +20,7 @@ export interface ItemDTO {
   name: string;
   description: string | null;
   quantity: number | null;
+  photo_path: string | null;
   created_at: string;
   updated_at: string;
 }

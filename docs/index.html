@@ -453,7 +453,10 @@
           <p class="muted" style="font-size:0.85rem;">In the real app this QR encodes a live URL to this container on your own server (Tailscale/Caddy/etc).</p>
           <div id="qr-canvas"></div>
           <div class="label-id">${container.id}</div>
-          <button id="close-modal-btn" style="margin-top:16px;">Close</button>
+          <div class="row" style="margin-top:16px; justify-content:center;">
+            <button id="download-label-btn">Download as PNG</button>
+            <button id="close-modal-btn">Close</button>
+          </div>
         </div>
       </div>
     `;
@@ -466,9 +469,47 @@
       colorLight: "#ffffff"
     });
     document.getElementById("close-modal-btn").addEventListener("click", closeModal);
+    document.getElementById("download-label-btn").addEventListener("click", () => downloadLabelPng(container.id));
     document.getElementById("modal-overlay").addEventListener("click", (e) => {
       if (e.target.id === "modal-overlay") closeModal();
     });
+  }
+
+  function downloadLabelPng(containerId) {
+    const qrCanvas = document.querySelector("#qr-canvas canvas");
+    const qrImg = document.querySelector("#qr-canvas img");
+    const size = 200;
+    const labelHeight = 40;
+    const out = document.createElement("canvas");
+    out.width = size;
+    out.height = size + labelHeight;
+    const ctx = out.getContext("2d");
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect(0, 0, out.width, out.height);
+
+    function drawIdAndSave() {
+      ctx.fillStyle = "#000000";
+      ctx.font = "bold 24px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(containerId, out.width / 2, size + labelHeight / 2);
+      const link = document.createElement("a");
+      link.download = `container-${containerId}-label.png`;
+      link.href = out.toDataURL("image/png");
+      link.click();
+    }
+
+    if (qrCanvas) {
+      ctx.drawImage(qrCanvas, 0, 0, size, size);
+      drawIdAndSave();
+    } else if (qrImg) {
+      const image = new Image();
+      image.onload = () => {
+        ctx.drawImage(image, 0, 0, size, size);
+        drawIdAndSave();
+      };
+      image.src = qrImg.src;
+    }
   }
 
   function closeModal() {

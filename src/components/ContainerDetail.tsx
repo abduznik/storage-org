@@ -227,6 +227,13 @@ export default function ContainerDetail({
               Print label
             </a>
             <a
+              href={`/api/containers/${container.id}/label`}
+              download={`container-${container.id}-label.png`}
+              className="text-sm rounded-md border border-black/15 dark:border-white/15 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"
+            >
+              Download label
+            </a>
+            <a
               href={`/api/containers/${container.id}/qr`}
               download={`container-${container.id}-qr.png`}
               className="text-sm rounded-md border border-black/15 dark:border-white/15 px-3 py-1.5 hover:bg-black/5 dark:hover:bg-white/10"

@@ -42,7 +42,7 @@ export async function GET(
   const svgLabel = `
     <svg width="${canvasWidth}" height="${labelHeight}">
       <rect width="100%" height="100%" fill="white" />
-      <text x="50%" y="65%" text-anchor="middle" font-family="monospace, 'Courier New'"
+      <text x="50%" y="65%" text-anchor="middle" font-family="'DejaVu Sans Mono', monospace, 'Courier New'"
             font-size="56" font-weight="bold" fill="black" letter-spacing="6">${idText}</text>
     </svg>
   `;

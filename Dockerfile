@@ -16,6 +16,12 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV DATA_DIR=/data
 
+# sharp renders the printable label's ID text via an SVG-to-PNG pass, which
+# needs an actual font available to the system (fontconfig/librsvg) — the
+# slim base image ships none, so text renders as empty boxes without this.
+RUN apt-get update && apt-get install -y --no-install-recommends fonts-dejavu-core \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd -r appuser && useradd -r -g appuser appuser \
     && mkdir -p /data/uploads && chown -R appuser:appuser /data
 

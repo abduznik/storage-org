@@ -1,0 +1,14 @@
+services:
+  storage-org:
+    build: .
+    container_name: storage-org
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - storage-org-data:/data
+    environment:
+      - NODE_ENV=production
+
+volumes:
+  storage-org-data:

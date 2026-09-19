@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Storage Organizer — Live Demo</title>
+<meta name="description" content="Try a client-side demo of Storage Organizer: nested containers, items, search, and printable QR labels." />
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+  :root {
+    --bg: #0a0a0a;
+    --panel: #111111;
+    --border: rgba(255,255,255,0.12);
+    --border-hover: rgba(255,255,255,0.3);
+    --text: #f5f5f5;
+    --muted: rgba(245,245,245,0.55);
+    --accent: #ffffff;
+    --accent-text: #0a0a0a;
+    --danger: #f87171;
+  }
+  @media (prefers-color-scheme: light) {
+    :root {
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --border: rgba(0,0,0,0.12);
+      --border-hover: rgba(0,0,0,0.3);
+      --text: #0a0a0a;
+      --muted: rgba(10,10,10,0.55);
+      --accent: #0a0a0a;
+      --accent-text: #ffffff;
+      --danger: #dc2626;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  }
+  a { color: inherit; }
+  header {
+    border-bottom: 1px solid var(--border);
+    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  header .brand { font-weight: 600; font-size: 1.1rem; }
+  .banner {
+    background: #eab308;
+    color: #1a1a1a;
+    font-size: 0.85rem;
+    text-align: center;
+    padding: 8px 12px;
+  }
+  .banner a { text-decoration: underline; font-weight: 600; }
+  main {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 24px 16px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  input[type="text"], input[type="number"] {
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 12px;
+    color: var(--text);
+    font-size: 0.95rem;
+  }
+  input:focus { outline: none; border-color: var(--border-hover); }
+  button {
+    font-family: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--text);
+    padding: 9px 14px;
+  }
+  button:hover { background: rgba(128,128,128,0.1); }
+  button.primary {
+    background: var(--accent);
+    color: var(--accent-text);
+    border-color: var(--accent);
+    font-weight: 600;
+  }
+  button.primary:disabled { opacity: 0.5; cursor: default; }
+  button.danger { border-color: var(--danger); color: var(--danger); }
+  .row { display: flex; gap: 8px; }
+  .card {
+    display: flex;
+    gap: 12px;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px;
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+  }
+  .card:hover { border-color: var(--border-hover); }
+  .thumb {
+    width: 56px; height: 56px; border-radius: 8px; flex-shrink: 0;
+    background: rgba(128,128,128,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.5rem; overflow: hidden;
+  }
+  .thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .grid { display: grid; gap: 8px; grid-template-columns: 1fr; }
+  @media (min-width: 560px) { .grid { grid-template-columns: 1fr 1fr; } }
+  .muted { color: var(--muted); }
+  .section-title { font-size: 0.85rem; color: var(--muted); margin-bottom: 8px; font-weight: 500; }
+  .badge {
+    font-size: 0.7rem; padding: 2px 6px; border-radius: 5px;
+    background: rgba(128,128,128,0.2); color: var(--muted);
+  }
+  .breadcrumbs { font-size: 0.85rem; color: var(--muted); display: flex; gap: 4px; flex-wrap: wrap; }
+  .breadcrumbs a:hover { text-decoration: underline; }
+  .detail-header { display: flex; gap: 16px; align-items: flex-start; }
+  .photo-box {
+    width: 96px; height: 96px; border-radius: 10px; flex-shrink: 0;
+    background: rgba(128,128,128,0.15);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; overflow: hidden; position: relative;
+  }
+  .photo-box img { width: 100%; height: 100%; object-fit: cover; }
+  h1.title { font-size: 1.5rem; margin: 0; }
+  .item-row {
+    display: flex; align-items: center; justify-content: space-between;
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 12px;
+    gap: 8px;
+  }
+  .item-row .meta { min-width: 0; }
+  .item-row .meta p { margin: 0; }
+  .item-row .desc { font-size: 0.85rem; color: var(--muted); }
+  .item-actions { display: flex; gap: 4px; flex-shrink: 0; }
+  .item-actions button { padding: 5px 10px; font-size: 0.8rem; }
+  .panel { border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    display: flex; align-items: center; justify-content: center; z-index: 50;
+    padding: 16px;
+  }
+  .modal {
+    background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+    padding: 20px; max-width: 360px; width: 100%; text-align: center;
+  }
+  .modal #qr-canvas { display: flex; justify-content: center; margin: 12px 0; }
+  .modal .label-id { font-family: monospace; font-weight: 700; font-size: 1.4rem; letter-spacing: 4px; }
+  .hidden { display: none !important; }
+  footer.note { text-align: center; color: var(--muted); font-size: 0.8rem; padding: 24px 16px; }
+</style>
+</head>
+<body>
+<div class="banner">
+  🧪 This is a client-side demo — data is stored only in your browser (localStorage), nothing is sent anywhere.
+  <a href="https://github.com/abduznik/storage-org" target="_blank" rel="noopener">View the real self-hosted app on GitHub →</a>
+</div>
+<header>
+  <div class="brand">📦 Storage Organizer <span class="badge">demo</span></div>
+  <button id="reset-btn">Reset demo data</button>
+</header>
+
+<main id="app"></main>
+
+<footer class="note">
+  Demo build — no accounts, no server. Clone the repo and run it with Docker for the real multi-user app with QR labels that actually deep-link to your containers.
+</footer>
+
+<div id="modal-root"></div>
+
+<script>
+(function () {
+  "use strict";
+
+  const STORAGE_KEY = "storage-org-demo-v1";
+
+  function seedData() {
+    return {
+      currentContainerId: null,
+      containers: {
+        "10001": { id: "10001", parentId: null, name: "Garage Closet", photo: null },
+        "10002": { id: "10002", parentId: "10001", name: "Small Parts Box", photo: null },
+        "10003": { id: "10003", parentId: null, name: "Kitchen Pantry Bin", photo: null }
+      },
+      items: {
+        "10002": [
+          { id: 1, name: "Bolt 3M", description: "M3x10 hex bolts", quantity: 25 },
+          { id: 2, name: "Zip ties", description: "Assorted sizes", quantity: 40 }
+        ],
+        "10001": [
+          { id: 3, name: "Extension cord", description: "", quantity: 1 }
+        ],
+        "10003": [
+          { id: 4, name: "Canned tomatoes", description: "28oz", quantity: 6 },
+          { id: 5, name: "Pasta", description: "Penne", quantity: 3 }
+        ]
+      },
+      nextItemId: 6
+    };
+  }
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    const seeded = seedData();
+    save(seeded);
+    return seeded;
+  }
+
+  function save(state) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    } catch (e) {}
+  }
+
+  let state = load();
+
+  function genId() {
+    let id;
+    do {
+      id = String(Math.floor(10000 + Math.random() * 90000));
+    } while (state.containers[id]);
+    return id;
+  }
+
+  function childrenOf(id) {
+    return Object.values(state.containers).filter((c) => c.parentId === id);
+  }
+
+  function topLevel() {
+    return Object.values(state.containers).filter((c) => !c.parentId);
+  }
+
+  function breadcrumbPath(id) {
+    const path = [];
+    let cur = state.containers[id];
+    const seen = new Set();
+    while (cur && !seen.has(cur.id)) {
+      seen.add(cur.id);
+      path.unshift(cur);
+      cur = cur.parentId ? state.containers[cur.parentId] : null;
+    }
+    return path;
+  }
+
+  function isDescendant(candidateId, ofId) {
+    let cur = state.containers[candidateId];
+    const seen = new Set();
+    while (cur && cur.parentId && !seen.has(cur.id)) {
+      seen.add(cur.id);
+      if (cur.parentId === ofId) return true;
+      cur = state.containers[cur.parentId];
+    }
+    return false;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+    }[c]));
+  }
+
+  function itemCount(containerId) {
+    let count = (state.items[containerId] || []).length;
+    return count;
+  }
+
+  const app = document.getElementById("app");
+  const modalRoot = document.getElementById("modal-root");
+
+  function navigate(containerId) {
+    state.currentContainerId = containerId;
+    render();
+  }
+
+  function containerCardHtml(c) {
+    const photo = c.photo
+      ? `<img src="${c.photo}" alt="">`
+      : `📦`;
+    return `
+      <a class="card" href="#" data-nav="${c.id}">
+        <div class="thumb">${photo}</div>
+        <div style="min-width:0;">
+          <div style="font-weight:500; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${escapeHtml(c.name)}</div>
+          <div class="muted" style="font-size:0.85rem;">ID ${c.id} · ${itemCount(c.id)} item${itemCount(c.id) === 1 ? "" : "s"}</div>
+        </div>
+      </a>`;
+  }
+
+  function renderDashboard() {
+    const containers = topLevel();
+    app.innerHTML = `
+      <input type="text" id="search-input" placeholder='Search by name or ID (e.g. "bolt 3m" or "10001")' />
+      <div id="search-results" class="hidden"></div>
+      <div id="dashboard-body">
+        <div class="row">
+          <input type="text" id="new-container-name" placeholder="New container name (e.g. Garage shelf A)" />
+          <button class="primary" id="create-container-btn">+ New</button>
+        </div>
+        <div style="margin-top:20px;">
+          <div class="section-title">Your containers</div>
+          <div class="grid" id="containers-grid">
+            ${containers.length ? containers.map(containerCardHtml).join("") : `<p class="muted">No containers yet. Create one above.</p>`}
+          </div>
+        </div>
+      </div>
+    `;
+
+    document.querySelectorAll("[data-nav]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        navigate(el.getAttribute("data-nav"));
+      });
+    });
+
+    document.getElementById("create-container-btn").addEventListener("click", () => {
+      const input = document.getElementById("new-container-name");
+      const name = input.value.trim();
+      if (!name) return;
+      const id = genId();
+      state.containers[id] = { id, parentId: null, name, photo: null };
+      state.items[id] = [];
+      save(state);
+      navigate(id);
+    });
+
+    const searchInput = document.getElementById("search-input");
+    const searchResults = document.getElementById("search-results");
+    const dashboardBody = document.getElementById("dashboard-body");
+
+    searchInput.addEventListener("input", () => {
+      const q = searchInput.value.trim().toLowerCase();
+      if (!q) {
+        searchResults.classList.add("hidden");
+        dashboardBody.classList.remove("hidden");
+        return;
+      }
+      dashboardBody.classList.add("hidden");
+      searchResults.classList.remove("hidden");
+
+      let matchedContainers = [];
+      let matchedItems = [];
+
+      if (/^\d+$/.test(q)) {
+        if (state.containers[q]) matchedContainers = [state.containers[q]];
+      } else {
+        matchedContainers = Object.values(state.containers).filter((c) =>
+          c.name.toLowerCase().includes(q)
+        );
+        Object.entries(state.items).forEach(([containerId, items]) => {
+          items.forEach((item) => {
+            if (
+              item.name.toLowerCase().includes(q) ||
+              (item.description || "").toLowerCase().includes(q)
+            ) {
+              matchedItems.push({ ...item, containerId });
+            }
+          });
+        });
+      }
+
+      let html = "";
+      if (matchedContainers.length) {
+        html += `<div class="section-title">Containers</div><div class="grid" style="margin-bottom:16px;">${matchedContainers.map(containerCardHtml).join("")}</div>`;
+      }
+      if (matchedItems.length) {
+        html += `<div class="section-title">Items</div><div style="display:flex; flex-direction:column; gap:8px;">${matchedItems.map((item) => `
+          <a class="card" href="#" data-nav="${item.containerId}" style="align-items:center;">
+            <div style="flex:1; min-width:0;">
+              <div style="font-weight:500;">${escapeHtml(item.name)}${item.quantity != null ? ` <span class="muted">× ${item.quantity}</span>` : ""}</div>
+              ${item.description ? `<div class="desc muted">${escapeHtml(item.description)}</div>` : ""}
+            </div>
+            <div class="muted" style="font-size:0.8rem;">in ${escapeHtml(state.containers[item.containerId].name)}</div>
+          </a>`).join("")}</div>`;
+      }
+      if (!matchedContainers.length && !matchedItems.length) {
+        html = `<p class="muted">No matches found.</p>`;
+      }
+      searchResults.innerHTML = html;
+      document.querySelectorAll("[data-nav]").forEach((el) => {
+        el.addEventListener("click", (e) => {
+          e.preventDefault();
+          navigate(el.getAttribute("data-nav"));
+        });
+      });
+    });
+  }
+
+  function openLabelModal(container) {
+    modalRoot.innerHTML = `
+      <div class="modal-overlay" id="modal-overlay">
+        <div class="modal">
+          <h3 style="margin-top:0;">Printable label</h3>
+          <p class="muted" style="font-size:0.85rem;">In the real app this QR encodes a live URL to this container on your own server (Tailscale/Caddy/etc).</p>
+          <div id="qr-canvas"></div>
+          <div class="label-id">${container.id}</div>
+          <button id="close-modal-btn" style="margin-top:16px;">Close</button>
+        </div>
+      </div>
+    `;
+    const target = document.getElementById("qr-canvas");
+    new QRCode(target, {
+      text: `https://your-storage-server.example/c/${container.id}`,
+      width: 200,
+      height: 200,
+      colorDark: "#000000",
+      colorLight: "#ffffff"
+    });
+    document.getElementById("close-modal-btn").addEventListener("click", closeModal);
+    document.getElementById("modal-overlay").addEventListener("click", (e) => {
+      if (e.target.id === "modal-overlay") closeModal();
+    });
+  }
+
+  function closeModal() {
+    modalRoot.innerHTML = "";
+  }
+
+  function itemRowHtml(item, containerId) {
+    return `
+      <div class="item-row" data-item-row="${item.id}">
+        <div class="meta">
+          <p>${escapeHtml(item.name)}${item.quantity != null ? ` <span class="muted">× ${item.quantity}</span>` : ""}</p>
+          ${item.description ? `<p class="desc">${escapeHtml(item.description)}</p>` : ""}
+        </div>
+        <div class="item-actions">
+          <button data-remove-item="${item.id}" class="danger">Remove</button>
+        </div>
+      </div>`;
+  }
+
+  function renderContainerDetail(id) {
+    const container = state.containers[id];
+    if (!container) {
+      navigate(null);
+      return;
+    }
+    const crumbs = breadcrumbPath(id);
+    const items = state.items[id] || [];
+    const children = childrenOf(id);
+
+    app.innerHTML = `
+      <nav class="breadcrumbs">
+        <a href="#" data-nav-home>Home</a>
+        ${crumbs.map((c) => `<span>/ ${c.id === id ? escapeHtml(c.name) : `<a href="#" data-nav="${c.id}">${escapeHtml(c.name)}</a>`}</span>`).join("")}
+      </nav>
+
+      <div class="detail-header">
+        <div class="photo-box" id="photo-box">
+          ${container.photo ? `<img src="${container.photo}" alt="">` : "📦"}
+        </div>
+        <div style="flex:1; min-width:0;">
+          <h1 class="title" id="container-title" contenteditable="true" spellcheck="false">${escapeHtml(container.name)}</h1>
+          <p class="muted" style="margin:4px 0;">ID ${container.id}</p>
+          <div class="row" style="flex-wrap:wrap; margin-top:8px;">
+            <button id="label-btn">🏷️ Print label</button>
+            ${container.parentId ? `<button data-nav="${container.parentId}" id="move-up-btn">⬆ Go to parent</button>` : ""}
+            <button class="danger" id="delete-container-btn">Delete</button>
+          </div>
+        </div>
+      </div>
+
+      <input type="file" id="photo-input" accept="image/*" class="hidden" />
+
+      <div>
+        <div class="section-title" style="display:flex; justify-content:space-between;">
+          <span>Nested containers (${children.length})</span>
+          <a href="#" id="add-nested-link">+ Add nested container</a>
+        </div>
+        <div id="add-nested-form" class="row hidden" style="margin-bottom:8px;">
+          <input type="text" id="nested-name-input" placeholder="e.g. Small parts box" />
+          <button class="primary" id="create-nested-btn">Create</button>
+        </div>
+        <div class="grid">
+          ${children.length ? children.map(containerCardHtml).join("") : `<p class="muted">No nested containers.</p>`}
+        </div>
+      </div>
+
+      <div>
+        <div class="section-title">Items (${items.length})</div>
+        <div style="display:flex; flex-direction:column; gap:6px;" id="items-list">
+          ${items.length ? items.map((it) => itemRowHtml(it, id)).join("") : `<p class="muted">No items yet.</p>`}
+        </div>
+        <div class="row" style="margin-top:10px;">
+          <input type="text" id="new-item-name" placeholder="Add item (e.g. Bolt 3M)" />
+          <input type="number" id="new-item-qty" placeholder="Qty" style="max-width:80px;" />
+          <button class="primary" id="add-item-btn">Add</button>
+        </div>
+      </div>
+
+      <div class="panel muted" style="font-size:0.85rem;">
+        Sharing with other users is available in the real self-hosted app — this demo is single-browser only.
+      </div>
+    `;
+
+    document.querySelectorAll("[data-nav]").forEach((el) => {
+      el.addEventListener("click", (e) => {
+        e.preventDefault();
+        navigate(el.getAttribute("data-nav"));
+      });
+    });
+    document.getElementById("[data-nav-home]");
+    const homeLink = app.querySelector("[data-nav-home]");
+    if (homeLink) {
+      homeLink.addEventListener("click", (e) => {
+        e.preventDefault();
+        navigate(null);
+      });
+    }
+
+    document.getElementById("label-btn").addEventListener("click", () => openLabelModal(container));
+
+    document.getElementById("delete-container-btn").addEventListener("click", () => {
+      if (!confirm(`Delete "${container.name}" and everything inside it?`)) return;
+      deleteContainerRecursive(id);
+      save(state);
+      navigate(container.parentId || null);
+    });
+
+    const titleEl = document.getElementById("container-title");
+    titleEl.addEventListener("blur", () => {
+      const val = titleEl.textContent.trim();
+      if (val) {
+        container.name = val;
+        save(state);
+      } else {
+        titleEl.textContent = container.name;
+      }
+    });
+    titleEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") { e.preventDefault(); titleEl.blur(); }
+    });
+
+    const photoBox = document.getElementById("photo-box");
+    const photoInput = document.getElementById("photo-input");
+    photoBox.addEventListener("click", () => photoInput.click());
+    photoInput.addEventListener("change", () => {
+      const file = photoInput.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = () => {
+        container.photo = reader.result;
+        save(state);
+        renderContainerDetail(id);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    document.getElementById("add-nested-link").addEventListener("click", (e) => {
+      e.preventDefault();
+      document.getElementById("add-nested-form").classList.toggle("hidden");
+    });
+    document.getElementById("create-nested-btn").addEventListener("click", () => {
+      const input = document.getElementById("nested-name-input");
+      const name = input.value.trim();
+      if (!name) return;
+      const newId = genId();
+      state.containers[newId] = { id: newId, parentId: id, name, photo: null };
+      state.items[newId] = [];
+      save(state);
+      renderContainerDetail(id);
+    });
+
+    document.getElementById("add-item-btn").addEventListener("click", () => {
+      const nameInput = document.getElementById("new-item-name");
+      const qtyInput = document.getElementById("new-item-qty");
+      const name = nameInput.value.trim();
+      if (!name) return;
+      const qty = qtyInput.value.trim() === "" ? null : Number(qtyInput.value);
+      state.items[id] = state.items[id] || [];
+      state.items[id].push({ id: state.nextItemId++, name, description: "", quantity: qty });
+      save(state);
+      renderContainerDetail(id);
+    });
+
+    app.querySelectorAll("[data-remove-item]").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const itemId = Number(btn.getAttribute("data-remove-item"));
+        state.items[id] = (state.items[id] || []).filter((it) => it.id !== itemId);
+        save(state);
+        renderContainerDetail(id);
+      });
+    });
+  }
+
+  function deleteContainerRecursive(id) {
+    childrenOf(id).forEach((child) => deleteContainerRecursive(child.id));
+    delete state.containers[id];
+    delete state.items[id];
+  }
+
+  function render() {
+    if (state.currentContainerId && state.containers[state.currentContainerId]) {
+      renderContainerDetail(state.currentContainerId);
+    } else {
+      state.currentContainerId = null;
+      renderDashboard();
+    }
+  }
+
+  document.getElementById("reset-btn").addEventListener("click", () => {
+    if (!confirm("Reset all demo data back to the sample containers?")) return;
+    state = seedData();
+    save(state);
+    render();
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
